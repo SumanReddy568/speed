@@ -12,16 +12,23 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 # Command handler for the /speedtest command
 async def speedtest_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     try:
+        # Initialize the Speedtest instance and get the closest server
         st = speedtest.Speedtest()
-        st.download()  # Initiate download test
-        st.upload()    # Initiate upload test
-        download_speed = st.results.download / 1e6  # Convert to Mbps
-        upload_speed = st.results.upload / 1e6      # Convert to Mbps
-        ping = st.results.ping                      # Ping in ms
+        st.get_best_server()
 
+        # Conduct download and upload tests multiple times for accuracy
+        download_speeds = [st.download() / 1e6 for _ in range(3)]  # Convert to Mbps
+        upload_speeds = [st.upload() / 1e6 for _ in range(3)]      # Convert to Mbps
+
+        # Average the results
+        avg_download_speed = sum(download_speeds) / len(download_speeds)
+        avg_upload_speed = sum(upload_speeds) / len(upload_speeds)
+        ping = st.results.ping  # Ping in ms
+
+        # Format and send the message with averaged speeds
         await update.message.reply_text(
-            f"Download speed: {download_speed:.2f} Mbps\n"
-            f"Upload speed: {upload_speed:.2f} Mbps\n"
+            f"Download speed: {avg_download_speed:.2f} Mbps\n"
+            f"Upload speed: {avg_upload_speed:.2f} Mbps\n"
             f"Ping: {ping} ms"
         )
     except Exception as e:
